@@ -1,0 +1,31 @@
+{
+  "name": "pointsvtgeneration",
+  "version": "1.0.0",
+  "description": "Pipeline to generate MBtiles (vector tiles) when a new point (a new picture) is validated or added",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "start": "npm run build && npm run serve",
+    "dev": "npm run lint && npm run build && npm run serve",
+    "build": "tsc",
+    "serve": "node dist/index.js",
+    "lint": "tslint --fix -c ./tslint.json 'src/**/*{.ts,.tsx}'"
+  },
+  "author": "imagoiq",
+  "license": "ISC",
+  "dependencies": {
+    "chalk": "^4.1.0",
+    "dotenv": "^8.2.0",
+    "filesize": "^6.1.0",
+    "pg": "^8.3.0",
+    "pg-listen": "^1.6.0",
+    "promisify-child-process": "^4.1.1"
+  },
+  "devDependencies": {
+    "@types/pg": "^7.14.4",
+    "@types/node": "^14.0.26",
+    "tslib": "^2.0.0",
+    "tslint": "^6.1.2",
+    "typescript": "^3.9.7"
+  }
+}
