@@ -53,6 +53,9 @@ RUN npm ci && \
 COPY --chown=smapshot_vt:smapshot_vt ./ /usr/src/app/
 RUN npm run build
 
+# Create output directory for tilesets
+RUN mkdir -p ./output
+
 # Wait for the database to be reachable before running the application.
 ENTRYPOINT [ \
   "tcpwait", \

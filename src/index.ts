@@ -1,11 +1,17 @@
 import './lib/env';
 
+import fs from 'fs';
 import chalk from 'chalk';
 import { performance, PerformanceObserver } from 'perf_hooks';
 
 import * as geoJSON from './geojson';
 import * as vt from './vt';
 import * as db from './db'
+
+/* Create output folder if it doesn't exist */
+if(!fs.existsSync("output")){
+  fs.mkdirSync("output");
+}
 
 db.connect().then((subscriber:any) => {
   /* Initalize listening of channel(s) */
@@ -43,7 +49,7 @@ const triggerPipeline = async (type: 'contribute' | 'visit', query: string) => {
     /* Export a GeoJSON file from the DB */
     await geoJSON.generate(`/tmp/${type}.geojson`, query)
     /* Export MbTiles from Geojson */
-    await vt.generate(`/tmp/${type}.geojson`, `${process.env.OUTPUT_PATH}/${type}.mbtiles`);
+    await vt.generate(`/tmp/${type}.geojson`, `./output/${type}.mbtiles`);
   }
 
   /* Measure pipeline duration */
