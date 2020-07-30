@@ -13,33 +13,36 @@ if(!fs.existsSync("output")){
   fs.mkdirSync("output");
 }
 
+/* Main */
+
 db.connect().then((subscriber:any) => {
-  /* Initalize listening of channel(s) */
-  launchListeningChannel(subscriber, ['new_visit', 'new_contribute']);
+  /* Visit point pipeline */
+  const visitQuery = "SELECT id, ST_Force2D(location) FROM images WHERE state='validated' AND location IS NOT NULL";
+  enablePipeline(subscriber, 'visit', visitQuery);
 
-  /* New Visit point pipeline */
-
-  subscriber.notifications.on('new_visit', async() => {
-    const query = "SELECT id, ST_Force2D(location) FROM images WHERE state='validated' AND location IS NOT NULL";
-
-    triggerPipeline('visit', query);
-  })
-
-  /* New Contribute point pipeline */
-
-  subscriber.notifications.on('new_contribute', async() => {
-    const query = "SELECT images.id, ST_Force2D(apriori_locations.geom) FROM images LEFT JOIN apriori_locations ON images.id = apriori_locations.image_id WHERE state='not_georef' AND apriori_locations IS NOT NULL";
-
-    triggerPipeline('contribute', query);
-  })
-
+  /* Contribute point pipeline */
+  const contributeQuery = "SELECT images.id, ST_Force2D(apriori_locations.geom) FROM images LEFT JOIN apriori_locations ON images.id = apriori_locations.image_id WHERE state='not_georef' AND apriori_locations IS NOT NULL";
+  enablePipeline(subscriber, 'contribute', contributeQuery);
 });
 
-const launchListeningChannel = (subscriber: any, channelNames: string[]) => {
-  channelNames.forEach((name: string) => {
-    subscriber.listenTo(name);
-    console.log(`Listen to channel '${name}'`)
-  });
+const enablePipeline = (subscriber: any, type: 'contribute' | 'visit', query: string) => {
+  const channelName = `new_${type}`;
+
+  /* Initalize listening of channel */
+  listenToChannel(subscriber, channelName);
+
+  /* Launch pipeline at startup if MBTiles doesn't exist */
+  if(!fs.existsSync(`./output/${type}.mbtiles`)){
+    triggerPipeline(type, query);
+  }
+
+  /* Set trigger on channel notification */
+  subscriber.notifications.on(channelName, async() => { triggerPipeline(type, query); })
+}
+
+const listenToChannel = (subscriber: any, name: string) => {
+  subscriber.listenTo(name);
+  console.log(`Listen to channel '${name}'`);
 }
 
 const triggerPipeline = async (type: 'contribute' | 'visit', query: string) => {
