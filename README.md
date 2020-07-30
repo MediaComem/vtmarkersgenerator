@@ -1,10 +1,13 @@
 # Vector tiles generation for Smapshot
 
-AddPipeline to generate MBtiles (vector tiles) when a new point (a new picture) is validated or added. The server use Node and listen by default to two 'PG_notify' notification 'new_visit' and 'new_contribute'. A GeoJSON is created with a specific SQL query for each of the point type and then processed with Tippecanoe to create a MBTiles file. The file can be then served with for example [maptiler/tileserver-gl](https://github.com/maptiler/tileserver-gl) or [consbio/mbtileserver](https://github.com/consbio/mbtileserver)
+Pipeline to generate MBtiles (vector tiles) when a new point (a new picture) is validated or added. The server use Node and listen by default to two 'PG_notify' notification 'new_visit' and 'new_contribute'. A GeoJSON is created with a specific SQL query for each of the point type and then processed with Tippecanoe to create a MBTiles file. The file can be then served with for example [maptiler/tileserver-gl](https://github.com/maptiler/tileserver-gl) or [consbio/mbtileserver](https://github.com/consbio/mbtileserver)
 
-## Installation
+## Getting started with Node.js
 
-Require the installation of the following binaries: ogr2ogr (from GDAL) and Tippecanoe
+To run the application on your machine, you will need:
+
+* ogr2ogr (from GDAL)
+* tippecanoe
 
 ### Installation of ogr2ogr on ubuntu
 
@@ -21,6 +24,27 @@ git clone https://github.com/mapbox/tippecanoe.git
 cd tippecanoe
 make -j
 make install
+
+### Running the application
+
+```bash
+# Install dependencies.
+npm ci
+
+# Run the application.
+npm run start
+```
+
+## Getting started with Docker
+
+To run the development environment in Docker containers, you will need:
+
+* Docker 19+
+* Docker Compose 1.25+
+
+Then simply build and run the application:
+```bash
+docker build . --tag smapshot-points-vt-generate:X.X
 ```
 
 ## Configuration
