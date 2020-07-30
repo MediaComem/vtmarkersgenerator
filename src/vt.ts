@@ -9,7 +9,7 @@ const generate = (inputpPath: string, exportPath: string) => {
     const exportArgs = [
         '--force',
         '--quiet',
-        '-z11',
+        '-zg',
         '-o',
         exportPath,
         '--drop-densest-as-needed',
