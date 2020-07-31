@@ -47,12 +47,25 @@ Then simply build and run the application:
 docker build . --tag smapshot-points-vt-generate:X.X
 ```
 
+### Using with docker-compose
+
+To use the kill feature, the docker socket need to be mounted as a volume:
+```yaml
+volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+```
+
+And docker container user smapshot_vt need to be granted permission on the `docker.sock` file of the host. This might be done by giving access to `docker` user group.
+
+
 ## Configuration
 
 The following environment variables need to be set at build time:
 
 Variable                         | Default value                                | Description
 :---                             | :---                                         | :---
+`KILL_IMAGE_NAME`                | -                                            | Imager name corresponding to a running container to send kill signal (for example to gracefully restart it when new tilesets are generated)
+`KILL_SIGNAL`                    | -                                            | Type of kill signal send to KILL_IMAGE_NAME container
 `DB_USER`                        | -                                            | The username to connect to the database
 `DB_PASS`                        | -                                            | The password to connect to the database
 `DB_HOST`                        | -                                            | The hostname to connect to the database

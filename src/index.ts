@@ -6,7 +6,11 @@ import { performance, PerformanceObserver } from 'perf_hooks';
 
 import * as geoJSON from './geojson';
 import * as vt from './vt';
-import * as db from './db'
+import * as db from './db';
+import Docker from 'dockerode';
+
+const dockerSocket = new Docker({socketPath: '/var/run/docker.sock'});
+
 
 /* Create output folder if it doesn't exist */
 if(!fs.existsSync("output")){
@@ -62,6 +66,45 @@ const triggerPipeline = async (type: 'contribute' | 'visit', query: string) => {
   performance.mark('stop');
   performance.measure(`${type} pipeline`, 'start', 'stop');
 
+  /* Send Kill signal */
+  const imageName = process.env.KILL_IMAGE_NAME || '';
+  const killSignal = process.env.KILL_SIGNAL || '';
+  sendKillSignal(imageName, killSignal);
+}
+
+
+const sendKillSignal = async (imageName: string, killSignal: string) => {
+  if(imageName === ''){
+    console.log('No image name provided to send kill signal, no signal will be send.')
+    return;
+  }
+  if(killSignal === ''){
+    console.log('No kill signal type provided, no signal will be send.')
+    return;
+  }
+
+  /* Retrieve container ID */
+  let containerID = '';
+
+  const listContainer = await dockerSocket.listContainers();
+
+  listContainer.forEach((containerInfo: any) => {
+    if(containerInfo.Image === imageName){
+      containerID = containerInfo.Id;
+      return;
+    }
+  });
+
+  const container = dockerSocket.getContainer(containerID);
+
+  if(containerID === ''){ // Next version will allow to test if container exist: https://github.com/apocas/dockerode/pull/585/commits/f78bd577e8d8faf40dc243189142f2dde3fc073c
+    console.log('No container is running with this image name.')
+    return;
+  }
+
+  /* Send kill signal */
+
+  container.kill({ signal: killSignal });
 }
 
 /* Log pipeline duration */
