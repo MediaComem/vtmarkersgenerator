@@ -1,18 +1,20 @@
 import './lib/env';
 
-import fs from 'fs';
 import chalk from 'chalk';
+import Docker from 'dockerode';
+import fs from 'fs';
 import { performance, PerformanceObserver } from 'perf_hooks';
 
-import * as geoJSON from './geojson';
-import * as vt from './vt';
-import * as db from './db';
-import Docker from 'dockerode';
+import * as db from './lib/db';
+import * as geoJSON from './pipeline/geojson';
+import * as vt from './pipeline/vt';
+
+/* Set docker socket connexion */
 
 const dockerSocket = new Docker({socketPath: '/var/run/docker.sock'});
 
-
 /* Create output folder if it doesn't exist */
+
 if(!fs.existsSync("output")){
   fs.mkdirSync("output");
 }
@@ -21,21 +23,25 @@ if(!fs.existsSync("output")){
 
 db.connect().then((subscriber:any) => {
   /* Visit point pipeline */
+
   const visitQuery = "SELECT id, ST_Force2D(location) FROM images WHERE state='validated' AND location IS NOT NULL";
   enablePipeline(subscriber, 'visit', visitQuery);
 
   /* Contribute point pipeline */
+
   const contributeQuery = "SELECT images.id, ST_Force2D(apriori_locations.geom) FROM images LEFT JOIN apriori_locations ON images.id = apriori_locations.image_id WHERE state='not_georef' AND apriori_locations IS NOT NULL";
   enablePipeline(subscriber, 'contribute', contributeQuery);
 });
 
 const enablePipeline = (subscriber: any, type: 'contribute' | 'visit', query: string) => {
-  const channelName = `new_${type}`;
+  const channelName = `${process.env.CHANNEL_NAME_PREFIX}${type}`;
 
   /* Initalize listening of channel */
+
   listenToChannel(subscriber, channelName);
 
   /* Launch pipeline at startup if MBTiles doesn't exist */
+
   if(!fs.existsSync(`./output/${type}.mbtiles`)){
     triggerPipeline(type, query);
   }
@@ -53,9 +59,13 @@ const triggerPipeline = async (type: 'contribute' | 'visit', query: string) => {
 
   const pipeline = async () => {
     console.log(chalk.hex(type === 'contribute' ? '#ff763c' : '#3cc0c5')(type) + ': new point triggered')
+
     /* Export a GeoJSON file from the DB */
+
     await geoJSON.generate(`/tmp/${type}.geojson`, query)
+
     /* Export MbTiles from Geojson */
+
     await vt.generate(`/tmp/${type}.geojson`, `./output/${type}.mbtiles`);
   }
 
@@ -84,6 +94,7 @@ const sendKillSignal = async (imageName: string, killSignal: string) => {
   }
 
   /* Retrieve container ID */
+
   let containerID = '';
 
   const listContainer = await dockerSocket.listContainers();
@@ -115,5 +126,3 @@ const performanceObserver = new PerformanceObserver((items: any, observer: any) 
   console.log(`Duration of ${entry?.name}: ${(ms/1000).toFixed(2)} seconds`);
 });
 performanceObserver.observe({ entryTypes: ['measure'] });
-
-

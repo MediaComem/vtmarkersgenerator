@@ -64,6 +64,7 @@ The following environment variables need to be set at build time:
 
 Variable                         | Default value                                | Description
 :---                             | :---                                         | :---
+`CHANNEL_NAME_PREFIX`            | -                                            | Give a prefix to the channel name. Default is no prefix
 `KILL_IMAGE_NAME`                | -                                            | Imager name corresponding to a running container to send kill signal (for example to gracefully restart it when new tilesets are generated)
 `KILL_SIGNAL`                    | -                                            | Type of kill signal send to KILL_IMAGE_NAME container
 `DB_USER`                        | -                                            | The username to connect to the database
@@ -73,3 +74,5 @@ Variable                         | Default value                                
 `DB_NAME`                        | -                                            | The database name to connect to the database
 
 Tilesets are stored at `/usr/src/app/output`.
+
+Default channel_name are `visit` and `contribute`.
