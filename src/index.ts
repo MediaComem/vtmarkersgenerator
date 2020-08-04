@@ -28,7 +28,7 @@ const initPipeline = (subscriber: any, name: string, channelName: string, sql: s
 
   /* Launch pipeline at startup */
 
-  if(process.env.TRIGGER_AT_STARTUP){
+  if(process.env.TRIGGER_AT_STARTUP === 'yes'){
     triggerPipeline(name, sql, vtParams);
   }
 

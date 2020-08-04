@@ -94,7 +94,7 @@ Optional variables can also be set for extra feature:
 
 Variable                         | Default value                                | Description
 :---                             | :---                                         | :---
-`TRIGGER_AT_STARTUP`             | -                                            | Trigger tasks when server is launched without postgresql notification.
+`TRIGGER_AT_STARTUP`             | -                                            | Trigger tasks when server is launched without postgresql notification. Accepted value = `yes`
 `KILL_IMAGE_NAME`                | -                                            | Imager name corresponding to a running container to send kill signal (for example to gracefully restart it when new tilesets are generated)
 `KILL_SIGNAL`                    | -                                            | Type of kill signal send to KILL_IMAGE_NAME container
 
