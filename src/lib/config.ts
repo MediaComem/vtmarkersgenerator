@@ -17,7 +17,7 @@ interface Task {
 
 const getTasks = async () => {
     try {
-        const doc: TasksFile = yaml.safeLoad(fs.readFileSync('./tasks.yml', 'utf8')) as TasksFile; // Probably not the best way to do it
+        const doc: TasksFile = yaml.safeLoad(fs.readFileSync('/tasks.yml', 'utf8')) as TasksFile; // Probably not the best way to do it
         return Object.entries(doc.tasks);
 
     } catch (e) {
