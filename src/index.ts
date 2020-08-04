@@ -1,128 +1,62 @@
 import './lib/env';
 
-import chalk from 'chalk';
-import Docker from 'dockerode';
-import fs from 'fs';
-import { performance, PerformanceObserver } from 'perf_hooks';
+import './lib/logPerformance';
+import { performance } from 'perf_hooks';
 
+import * as config from './lib/config';
 import * as db from './lib/db';
+
 import * as geoJSON from './pipeline/geojson';
+import * as killSignal from './pipeline/killSignal';
 import * as vt from './pipeline/vt';
-
-/* Set docker socket connexion */
-
-const dockerSocket = new Docker({socketPath: '/var/run/docker.sock'});
-
-/* Create output folder if it doesn't exist */
-
-if(!fs.existsSync("output")){
-  fs.mkdirSync("output");
-}
 
 /* Main */
 
-db.connect().then((subscriber:any) => {
-  /* Visit point pipeline */
+const tasks = config.getTasks();
 
-  const visitQuery = "SELECT id, ST_Force2D(location) FROM images WHERE state='validated' AND location IS NOT NULL";
-  enablePipeline(subscriber, 'visit', visitQuery);
-
-  /* Contribute point pipeline */
-
-  const contributeQuery = "SELECT images.id, ST_Force2D(apriori_locations.geom) FROM images LEFT JOIN apriori_locations ON images.id = apriori_locations.image_id WHERE state='not_georef' AND apriori_locations IS NOT NULL";
-  enablePipeline(subscriber, 'contribute', contributeQuery);
+db.connect().then(async(subscriber:any) => {
+  (await tasks).forEach(([name, task]) => {
+    initPipeline(subscriber, name, task.channelName, task.sql, task.vtParams);
+  })
 });
 
-const enablePipeline = (subscriber: any, type: 'contribute' | 'visit', query: string) => {
-  const channelName = `${process.env.CHANNEL_NAME_PREFIX}${type}`;
-
+const initPipeline = (subscriber: any, name: string, channelName: string, sql: string, vtParams: string[]) => {
   /* Initalize listening of channel */
 
-  listenToChannel(subscriber, channelName);
+  subscriber.listenTo(channelName);
+  console.log(`Listen to channel '${channelName}'`);
 
-  /* Launch pipeline at startup if MBTiles doesn't exist */
+  /* Launch pipeline at startup */
 
-  if(!fs.existsSync(`./output/${type}.mbtiles`)){
-    triggerPipeline(type, query);
+  if(process.env.TRIGGER_AT_STARTUP){
+    triggerPipeline(name, sql, vtParams);
   }
 
   /* Set trigger on channel notification */
-  subscriber.notifications.on(channelName, async() => { triggerPipeline(type, query); })
+  subscriber.notifications.on(channelName, async() => { triggerPipeline(name, sql, vtParams); })
 }
 
-const listenToChannel = (subscriber: any, name: string) => {
-  subscriber.listenTo(name);
-  console.log(`Listen to channel '${name}'`);
-}
+const triggerPipeline = async (name: string, sql: string, vtParams: string[]) => {
+  console.log(`Task ${name}: new point triggered`)
 
-const triggerPipeline = async (type: 'contribute' | 'visit', query: string) => {
-
-  const pipeline = async () => {
-    console.log(chalk.hex(type === 'contribute' ? '#ff763c' : '#3cc0c5')(type) + ': new point triggered')
-
-    /* Export a GeoJSON file from the DB */
-
-    await geoJSON.generate(`/tmp/${type}.geojson`, query)
-
-    /* Export MbTiles from Geojson */
-
-    await vt.generate(`/tmp/${type}.geojson`, `./output/${type}.mbtiles`);
-  }
-
-  /* Measure pipeline duration */
+  /* Start performance timer */
 
   performance.mark('start');
-  await pipeline();
+
+  /* 1. Export a GeoJSON file from the DB */
+
+  await geoJSON.generate(`${process.env.TMP_PATH}/${name}.geojson`, sql)
+
+  /* 2. Export MbTiles from Geojson */
+
+  await vt.generate(`${process.env.TMP_PATH}/${name}.geojson`, `${process.env.OUTPUT_PATH}/${name}.mbtiles`, vtParams);
+
+  /* 3. Send signal to vector tiles server */
+
+  killSignal.send();
+
+  /* Stop performance timer and measure it - performanceObserver will log automatically the measurement */
+
   performance.mark('stop');
-  performance.measure(`${type} pipeline`, 'start', 'stop');
-
-  /* Send Kill signal */
-  const imageName = process.env.KILL_IMAGE_NAME || '';
-  const killSignal = process.env.KILL_SIGNAL || '';
-  sendKillSignal(imageName, killSignal);
+  performance.measure(`${name} pipeline`, 'start', 'stop');
 }
-
-
-const sendKillSignal = async (imageName: string, killSignal: string) => {
-  if(imageName === ''){
-    console.log('No image name provided to send kill signal, no signal will be send.')
-    return;
-  }
-  if(killSignal === ''){
-    console.log('No kill signal type provided, no signal will be send.')
-    return;
-  }
-
-  /* Retrieve container ID */
-
-  let containerID = '';
-
-  const listContainer = await dockerSocket.listContainers();
-
-  listContainer.forEach((containerInfo: any) => {
-    if(containerInfo.Image === imageName){
-      containerID = containerInfo.Id;
-      return;
-    }
-  });
-
-  const container = dockerSocket.getContainer(containerID);
-
-  if(containerID === ''){ // Next version will allow to test if container exist: https://github.com/apocas/dockerode/pull/585/commits/f78bd577e8d8faf40dc243189142f2dde3fc073c
-    console.log('No container is running with this image name.')
-    return;
-  }
-
-  /* Send kill signal */
-
-  container.kill({ signal: killSignal });
-}
-
-/* Log pipeline duration */
-
-const performanceObserver = new PerformanceObserver((items: any, observer: any) => {
-  const entry = items.getEntries().pop();
-  const ms = entry?.duration || 0;
-  console.log(`Duration of ${entry?.name}: ${(ms/1000).toFixed(2)} seconds`);
-});
-performanceObserver.observe({ entryTypes: ['measure'] });

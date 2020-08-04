@@ -2,24 +2,20 @@ import { spawn } from 'child_process';
 import fs from 'fs';
 import filesize from 'filesize';
 
-const generate = (inputpPath: string, exportPath: string) => {
+const generate = (inputpPath: string, exportPath: string, exportArgs: string[]) => {
     if(!inputpPath) throw new Error('Export of vector tiles require an input path')
     if(!exportPath) throw new Error('Export of vector tiles require an export path')
 
-    const exportArgs = [
+    const baseArgs = [
         '--force',
         '--quiet',
-        '--use-attribute-for-id=id',
-        '-zg',
         '-o',
         exportPath,
-        '--drop-densest-as-needed',
-        '--extend-zooms-if-still-dropping',
         inputpPath
     ];
 
     return new Promise((resolve, reject) => {
-        const task = spawn('tippecanoe', exportArgs, { shell: true });
+        const task = spawn('tippecanoe', [...baseArgs,...exportArgs], { shell: true });
 
         task.stderr.on('data', (data: string) => {
             console.error(`VT export stderr:\n${data}`);

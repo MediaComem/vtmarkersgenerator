@@ -1,0 +1,17 @@
+tasks:
+
+  visit:
+    channelName: "update_vt_visit"
+    sql: "SELECT id, title, location FROM images"
+    vtParams:
+      - "-zg"
+      - "--drop-densest-as-needed"
+      - "--extend-zooms-if-still-dropping"
+
+  contribute:
+    channelName: "update_vt_contribute"
+    sql: "SELECT id, location FROM images"
+    vtParams:
+      - "-zg"
+      - "--drop-densest-as-needed"
+      - "--extend-zooms-if-still-dropping"

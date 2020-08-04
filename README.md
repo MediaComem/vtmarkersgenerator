@@ -43,19 +43,10 @@ To run the development environment in Docker containers, you will need:
 * Docker Compose 1.25+
 
 Then simply build and run the application:
+
 ```bash
 docker build . --tag smapshot-points-vt-generate:X.X
 ```
-
-### Using with docker-compose
-
-To use the kill feature, the docker socket need to be mounted as a volume:
-```yaml
-volumes:
-    - /var/run/docker.sock:/var/run/docker.sock
-```
-
-And docker container user smapshot_vt need to be granted permission on the `docker.sock` file of the host. This might be done by giving access to `docker` user group.
 
 ## Using the vector tiles
 
@@ -63,19 +54,59 @@ Be aware that current Tippecanoe configuration guess what the best max zoom is. 
 
 ## Configuration
 
-The following environment variables need to be set at build time:
+Tilesets are stored at `/usr/src/app/output` use a volume to share it with other containers using docker-compose:
+
+```yaml
+volumes:
+    - 'vt_tilesets:/usr/src/app/output'
+```
+
+## Tasks file
+
+Tasks are defined in a yaml file as `./tasks.yml`. Copy a local file to the container within a DockerFile or share a volume to allow the container to access it.
+
+Each task is defined with the name of the task under the tasks attribut:
+
+```yaml
+tasks:
+    nameOfTheTask:
+        channelName: "myChannelName" # Channel name is use in Postgresl to trigger a new task with for example 'NOTIFY myChannelName;'
+        sql: "SELECT id, location FROM images" # SQL query used to export data to GeoJSON. Geometry is automagically discovered. Other attributes are stored in the properties of each feature
+        vtParams: # Command parameters to generate vector tiles with Tippecanoe. Default are '--force', '--quiet' and export-input paths.
+        - "-zg"
+        - "--drop-densest-as-needed"
+        - "--extend-zooms-if-still-dropping"
+```
+
+## Environment
+
+Moreover, the following environment variables need to be set at build time:
 
 Variable                         | Default value                                | Description
 :---                             | :---                                         | :---
-`CHANNEL_NAME_PREFIX`            | -                                            | Give a prefix to the channel name. Default is no prefix
-`KILL_IMAGE_NAME`                | -                                            | Imager name corresponding to a running container to send kill signal (for example to gracefully restart it when new tilesets are generated)
-`KILL_SIGNAL`                    | -                                            | Type of kill signal send to KILL_IMAGE_NAME container
 `DB_USER`                        | -                                            | The username to connect to the database
 `DB_PASS`                        | -                                            | The password to connect to the database
 `DB_HOST`                        | -                                            | The hostname to connect to the database
 `DB_PORT`                        | -                                            | The port to connect to the database
 `DB_NAME`                        | -                                            | The database name to connect to the database
 
-Tilesets are stored at `/usr/src/app/output`.
+Optional variables can also be set for extra feature:
 
-Default channel_name are `visit` and `contribute`.
+Variable                         | Default value                                | Description
+:---                             | :---                                         | :---
+`TRIGGER_AT_STARTUP`             | -                                            | Trigger tasks when server is launched without postgresql notification.
+`KILL_IMAGE_NAME`                | -                                            | Imager name corresponding to a running container to send kill signal (for example to gracefully restart it when new tilesets are generated)
+`KILL_SIGNAL`                    | -                                            | Type of kill signal send to KILL_IMAGE_NAME container
+
+### Kill Signal feature
+
+The pipeline can send a kill signal to another Docker container sharing the docker socket. It can be useful to gracefully restart the vector tiles server when new tilesets are generated.
+
+To use this feature, the docker socket need to be mounted as a volume when using docker-compose:
+
+```yaml
+volumes:
+    - '/var/run/docker.sock:/var/run/docker.sock'
+```
+
+And docker container user `smapshot_vt` need to be granted write permission on the `docker.sock` file of the host. This might be done by giving access to `docker` user group.
