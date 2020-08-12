@@ -1,6 +1,6 @@
-# Vector tiles generation for Smapshot
+# PG Extract to Mbtiles
 
-Pipeline to generate MBtiles (vector tiles) when a new point (a new picture) is validated or added. The server use Node and listen by default to two 'PG_notify' notification 'new_visit' and 'new_contribute'. A GeoJSON is created with a specific SQL query for each of the point type and then processed with Tippecanoe to create a MBTiles file. The file can be then served with for example [maptiler/tileserver-gl](https://github.com/maptiler/tileserver-gl) or [consbio/mbtileserver](https://github.com/consbio/mbtileserver)
+Tasks pipeline to generate MBtiles (vector tiles) from a PostGIS server using channel notification, og2ogr and tippecanoe. When a new notification from `PG_notify` is received, a GeoJSON is created with a specific SQL query for the given task and then processed with Tippecanoe to create a MBTiles file. The file can be then served for example with [maptiler/tileserver-gl](https://github.com/maptiler/tileserver-gl) or [consbio/mbtileserver](https://github.com/consbio/mbtileserver).
 
 ## Getting started with Node.js
 
@@ -98,7 +98,13 @@ Variable                         | Default value                                
 `KILL_IMAGE_NAME`                | -                                            | Imager name corresponding to a running container to send kill signal (for example to gracefully restart it when new tilesets are generated)
 `KILL_SIGNAL`                    | -                                            | Type of kill signal send to KILL_IMAGE_NAME container
 
-### Kill Signal feature
+### Reload the vector tiles server
+
+A fork of `consbio/mbtileserver` has been created which add a file watcher functionality. Every minute a cron job is initiated to check if mbtiles inside a given folder have been changed and send a kill signal inside the container to gracefully restart the tilesets generation of mbtileserver. If you need a faster solution, you should check the next chapter.
+
+#### Using kill signal
+
+⚠ Be aware that sharing the docker socket could comprise the security of your docker instance and espcecially your host
 
 The pipeline can send a kill signal to another Docker container sharing the docker socket. It can be useful to gracefully restart the vector tiles server when new tilesets are generated.
 
