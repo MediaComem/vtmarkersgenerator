@@ -63,7 +63,12 @@ volumes:
 
 ## Tasks file
 
-Tasks are defined in a yaml file as `/tasks.yml`. Copy a local file to the container within a DockerFile or share a volume to allow the container to access it.
+Tasks are defined in a yaml file as `./tasks.yml`. Copy a local file to the container within a DockerFile or share a volume to allow the container to access it:
+
+```yaml
+volumes:
+    - yourLocalRelativePath/tasks.yml:/usr/src/app/tasks.yml
+```
 
 Each task is defined with the name of the task under the tasks attributes:
 

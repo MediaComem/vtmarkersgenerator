@@ -1,0 +1,48 @@
+tasks:
+
+  visit:
+    channelName: "update_vt_visit"
+    sql: "
+      SELECT id, owner_id, collection_id, ST_Force2D(ST_SnapToGrid(location, 0.0001)) AS geom,
+      (CASE
+          WHEN date_shot IS NOT NULL
+          THEN to_char(date(date_shot),'yyyymmdd')::int
+          ELSE to_char(date(date_min),'yyyymmdd')::int
+          END) AS date_shot_min,
+      (CASE
+          WHEN date_shot IS NOT NULL
+          THEN to_char(date(date_shot),'yyyymmdd')::int
+          ELSE to_char(date(date_max),'yyyymmdd')::int
+          END) AS date_shot_max
+      FROM images
+      WHERE state='validated' AND location IS NOT NULL
+    "
+    vtParams:
+      - "--use-attribute-for-id=id"
+      - "-zg"
+      - "--drop-densest-as-needed"
+      - "--extend-zooms-if-still-dropping"
+
+  contribute:
+    channelName: "update_vt_contribute"
+    sql: "
+      SELECT images.id, images.owner_id, images.collection_id, ST_Force2D(ST_SnapToGrid(apriori_locations.geom, 0.0001)) ,
+      (CASE
+          WHEN date_shot IS NOT NULL
+          THEN to_char(date(date_shot),'yyyymmdd')::int
+          ELSE to_char(date(date_min),'yyyymmdd')::int
+          END) AS date_shot_min,
+      (CASE
+          WHEN date_shot IS NOT NULL
+          THEN to_char(date(date_shot),'yyyymmdd')::int
+          ELSE to_char(date(date_max),'yyyymmdd')::int
+          END) AS date_shot_max
+      FROM images
+      LEFT JOIN apriori_locations ON images.id = apriori_locations.image_id
+      WHERE state='not_georef' AND apriori_locations IS NOT NULL
+    "
+    vtParams:
+      - "--use-attribute-for-id=id"
+      - "-zg"
+      - "--drop-densest-as-needed"
+      - "--extend-zooms-if-still-dropping"
