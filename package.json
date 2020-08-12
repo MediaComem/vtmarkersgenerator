@@ -1,6 +1,6 @@
 {
   "name": "pointsvtgeneration",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Pipeline to generate MBtiles (vector tiles) when a new point (a new picture) is validated or added",
   "main": "index.js",
   "private": true,
