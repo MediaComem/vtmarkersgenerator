@@ -65,7 +65,7 @@ volumes:
 
 Tasks are defined in a yaml file as `/tasks.yml`. Copy a local file to the container within a DockerFile or share a volume to allow the container to access it.
 
-Each task is defined with the name of the task under the tasks attribut:
+Each task is defined with the name of the task under the tasks attributes:
 
 ```yaml
 tasks:
@@ -90,7 +90,7 @@ Variable                         | Default value                                
 `DB_PORT`                        | -                                            | The port to connect to the database
 `DB_NAME`                        | -                                            | The database name to connect to the database
 
-Optional variables can also be set for extra feature:
+Optional variables can also be set for extra features:
 
 Variable                         | Default value                                | Description
 :---                             | :---                                         | :---
@@ -104,11 +104,11 @@ A fork of `consbio/mbtileserver` has been created which add a file watcher funct
 
 #### Using kill signal
 
-⚠ Be aware that sharing the docker socket could comprise the security of your docker instance and espcecially your host
+⚠ Be aware that sharing the docker socket could comprise the security of your docker instance and especially your host
 
 The pipeline can send a kill signal to another Docker container sharing the docker socket. It can be useful to gracefully restart the vector tiles server when new tilesets are generated.
 
-To use this feature, the docker socket need to be mounted as a volume when using docker-compose:
+To use this feature, the docker socket needs to be mounted as a volume when using docker-compose:
 
 ```yaml
 volumes:
