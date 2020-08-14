@@ -1,22 +1,20 @@
 import Docker from 'dockerode';
 
+const imageName = process.env.KILL_IMAGE_NAME || '';
+const killSignal = process.env.KILL_SIGNAL || '';
+
+if(imageName === '' || killSignal === ''){
+  console.log('Kill signal: missing no image name, signal type or both to send signal, nothing will be send.')
+}
+
 /* Set docker socket connexion */
 
 const dockerSocket = new Docker({socketPath: '/var/run/docker.sock'});
 
 const send = async () => {
-    const imageName = process.env.KILL_IMAGE_NAME || '';
-    const killSignal = process.env.KILL_SIGNAL || '';
-
-    if(imageName === ''){
-      console.log('No image name provided to send kill signal, no signal will be send.')
+    if(imageName === '' || killSignal === ''){
       return;
     }
-    if(killSignal === ''){
-      console.log('No kill signal type provided, no signal will be send.')
-      return;
-    }
-
     /* Retrieve container ID */
 
     let containerID = '';

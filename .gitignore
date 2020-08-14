@@ -5,3 +5,4 @@ dist
 !.env.sample
 .vscode
 output
+tasks.yml

@@ -11,6 +11,7 @@ interface Tasks {
 
 interface Task {
     channelName: string,
+    debounceWait: number,
     sql: string,
     vtParams: string[]
 }

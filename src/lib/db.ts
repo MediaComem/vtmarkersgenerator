@@ -9,11 +9,11 @@ subscriber.events.on('connected', () => {
 })
 
 subscriber.events.on('reconnect', () => {
-  console.error('Connection to database lost, reconnect attempt')
+  console.error('\nConnection to database lost, reconnect attempt\n')
 })
 
 subscriber.events.on('error', (error: Error) => {
-  console.error('Fatal database connection error:', error)
+  console.error('\nFatal database connection error:', error)
   process.exit(1);
 })
 
@@ -26,7 +26,7 @@ const connect = async () => {
     await subscriber.connect()
     return subscriber
   } catch(err){
-    console.error('Database connection failure');
+    console.error('\nDatabase connection failure\n');
     process.exit(1);
   }
 }

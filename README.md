@@ -76,6 +76,7 @@ Each task is defined with the name of the task under the tasks attributes:
 tasks:
     nameOfTheTask:
         channelName: "myChannelName" # Channel name is use in Postgresl to trigger a new task with for example 'NOTIFY myChannelName;'
+        debounceWait: 30000 # If provided activate debounce function with timing provided in ms
         sql: "SELECT id, location FROM images" # SQL query used to export data to GeoJSON. Geometry is automagically discovered. Other attributes are stored in the properties of each feature
         vtParams: # Command parameters to generate vector tiles with Tippecanoe. Default are '--force', '--quiet' and export-input paths.
         - "-zg"
