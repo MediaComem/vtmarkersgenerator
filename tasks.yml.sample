@@ -2,6 +2,7 @@ tasks:
 
   visit:
     channelName: "update_vt_visit"
+    debounceWait: 30000
     sql: "SELECT id, title, location FROM images"
     vtParams:
       - "-zg"
@@ -10,6 +11,7 @@ tasks:
 
   contribute:
     channelName: "update_vt_contribute"
+    debounceWait: 30000
     sql: "SELECT id, location FROM images"
     vtParams:
       - "-zg"

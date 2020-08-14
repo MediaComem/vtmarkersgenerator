@@ -6,3 +6,4 @@ dist
 .vscode
 output
 tasks.yml
+!tasks.yml.sample
