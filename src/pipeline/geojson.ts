@@ -12,7 +12,7 @@ const generate = (exportPath: string, query : string) => {
         exportPath,
         `PG:"host=${process.env.DB_HOST} port=${process.env.DB_PORT} user=${process.env.DB_USER} password=${process.env.DB_PASS} dbname=${process.env.DB_NAME}"`,
         '-sql',
-        JSON.stringify(query)
+        JSON.stringify(query.trim())
     ];
 
     /* Delete geoJSON if already exist to prevent issue with GDAL GeoJSON overwriting driver */
@@ -24,13 +24,14 @@ const generate = (exportPath: string, query : string) => {
         const task = spawn('ogr2ogr ', exportArgs, { shell: true });
 
         task.stderr.on('data', (data: string) => {
-            console.error(`GeoJSON export stderr:\n${data}`);
+            console.error(`GeoJSON export stderr: ${data}`);
+            reject();
         });
 
         task.on('close', (code: number) => {
             if (code !== 0) {
                 console.error(`GeoJSON export process exited with code ${code}`);
-                process.exit(1)
+                reject();
             }
 
             const fileStats = fs.statSync(exportPath);

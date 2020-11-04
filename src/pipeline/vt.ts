@@ -18,13 +18,14 @@ const generate = (inputpPath: string, exportPath: string, exportArgs: string[]) 
         const task = spawn('tippecanoe', [...baseArgs,...exportArgs], { shell: true });
 
         task.stderr.on('data', (data: string) => {
-            console.error(`VT export stderr:\n${data}`);
+            console.error(`VT export stderr: ${data}`);
+            reject();
         });
 
         task.on('close', (code: number) => {
             if (code !== 0) {
                 console.error(`VT export process exited with code ${code}`);
-                process.exit(1)
+                reject();
             }
 
             const fileStats = fs.statSync(exportPath);

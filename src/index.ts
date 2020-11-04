@@ -51,7 +51,7 @@ const initPipeline = async (subscriber: any, name: string, channelName: string, 
 }
 
 const triggerPipeline = async (name: string, sql: string, vtParams: string[]): Promise<any> => {
-  console.log(`\nTask ${name}: new point triggered`)
+  console.log(`\nTask '${name}': new point triggered`)
 
   try{
     /* Start performance timer */
@@ -76,7 +76,6 @@ const triggerPipeline = async (name: string, sql: string, vtParams: string[]): P
     performance.measure(`${name} pipeline`, 'start', 'stop');
 
   } catch(e){
-    console.log(e);
-    process.exit(1);
+    console.log(`Task '${name}': An error happen during the generation, please review the parameters\n`);
   }
 }
