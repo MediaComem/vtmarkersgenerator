@@ -2,9 +2,9 @@ import { spawn } from 'child_process';
 import fs from 'fs';
 import filesize from 'filesize';
 
-const generate = (exportPath: string, query : string) => {
-    if(!exportPath) throw new Error('Export of geojson require an export path')
-    if(!query) throw new Error('Export of geojson require an SQL query')
+const generate = (exportPath: string, query: string) => {
+    if (!exportPath) throw new Error('Export of geojson require an export path');
+    if (!query) throw new Error('Export of geojson require an SQL query');
 
     const exportArgs = [
         '-f',
@@ -12,7 +12,7 @@ const generate = (exportPath: string, query : string) => {
         exportPath,
         `PG:"host=${process.env.DB_HOST} port=${process.env.DB_PORT} user=${process.env.DB_USER} password=${process.env.DB_PASS} dbname=${process.env.DB_NAME}"`,
         '-sql',
-        JSON.stringify(query.trim())
+        `"${query.trim()}"`
     ];
 
     /* Delete geoJSON if already exist to prevent issue with GDAL GeoJSON overwriting driver */
@@ -20,7 +20,7 @@ const generate = (exportPath: string, query : string) => {
         fs.unlinkSync(exportPath);
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
         const task = spawn('ogr2ogr ', exportArgs, { shell: true });
 
         task.stderr.on('data', (data: string) => {
@@ -35,11 +35,11 @@ const generate = (exportPath: string, query : string) => {
             }
 
             const fileStats = fs.statSync(exportPath);
-            console.log(`Temporary geoJSON sucessfuly created at ${exportPath} with a size of ${filesize(fileStats.size, {round: 0})} `);
+            console.log(`Temporary geoJSON sucessfuly created at ${exportPath} with a size of ${filesize(fileStats.size, { round: 0 })} `);
             resolve();
         });
     });
-}
+};
 
 export {
     generate

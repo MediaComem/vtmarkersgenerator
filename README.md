@@ -1,6 +1,8 @@
-# PG Extract to Mbtiles
+# Vector Tiles Markers Generator
 
-Tasks pipeline to generate MBtiles (vector tiles) from a PostGIS server using channel notification, og2ogr and tippecanoe. When a new notification from `PG_notify` is received, a GeoJSON is created with a specific SQL query for the given task and then processed with Tippecanoe to create a MBTiles file. The file can be then served for example with [maptiler/tileserver-gl](https://github.com/maptiler/tileserver-gl) or [consbio/mbtileserver](https://github.com/consbio/mbtileserver).
+Tasks pipeline to generate MBtiles (vector tiles) from a PostGIS server using channel notification, og2ogr and tippecanoe. This was especially made for simple tasks like creating a layer with a lot of markers/points.
+
+When a new notification from `PG_notify` is received, a GeoJSON is created with a specific SQL query for the given task and then processed with Tippecanoe to create a MBTiles file. The file can be then served for example with [maptiler/tileserver-gl](https://github.com/maptiler/tileserver-gl) or [consbio/mbtileserver](https://github.com/consbio/mbtileserver).
 
 ## Getting started with Node.js
 
@@ -76,12 +78,41 @@ Each task is defined with the name of the task under the tasks attributes:
 tasks:
     nameOfTheTask:
         channelName: "myChannelName" # Channel name is use in Postgresl to trigger a new task with for example 'NOTIFY myChannelName;'
-        debounceWait: 30000 # If provided activate debounce function with timing provided in ms
         sql: "SELECT id, location FROM images" # SQL query used to export data to GeoJSON. Geometry is automagically discovered. Other attributes are stored in the properties of each feature
+        sqlColumNameRef: "images.id" # Column reference which are used in the payload and the update query. Tips: avoid ambiguity by proving table name
         vtParams: # Command parameters to generate vector tiles with Tippecanoe. Default are '--force', '--quiet' and export-input paths.
-        - "-zg"
+        - "-z9" # -zg auto is not recommended. Tile-join support only merging mbtiles with same max zoom level.
         - "--drop-densest-as-needed"
         - "--extend-zooms-if-still-dropping"
+```
+
+## Trigger and Notify PSQL function
+
+Example of a trigger and a way to notify for change on a table:
+
+```sql
+CREATE OR REPLACE FUNCTION update_points_vt() RETURNS trigger AS $$
+BEGIN
+ -- When state changed, update vt
+ IF old.state <> new.state
+ THEN
+    PERFORM pg_notify(
+        'myChannelName',
+        json_build_object(
+            'action', 'add', # add/remove are supported
+            'ref', new.id
+        )::text
+    );
+ END IF;
+
+ RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS update_points_vt_trigger ON images;
+
+CREATE TRIGGER update_points_vt_trigger AFTER UPDATE on images
+FOR EACH ROW EXECUTE PROCEDURE update_points_vt();
 ```
 
 ## Environment
@@ -100,7 +131,6 @@ Optional variables can also be set for extra features:
 
 Variable                         | Default value                                | Description
 :---                             | :---                                         | :---
-`TRIGGER_AT_STARTUP`             | -                                            | Trigger tasks when server is launched without postgresql notification. Accepted value = `yes`
 `KILL_IMAGE_NAME`                | -                                            | Imager name corresponding to a running container to send kill signal (for example to gracefully restart it when new tilesets are generated)
 `KILL_SIGNAL`                    | -                                            | Type of kill signal send to KILL_IMAGE_NAME container
 
@@ -122,3 +152,10 @@ volumes:
 ```
 
 And docker container user `smapshot_vt` need to be granted write permission on the `docker.sock` file of the host. This might be done by giving access to `docker` user group.
+
+#### Using mediacomem/mbtileserver fork
+
+A safer option is to use a tileserver with a cron job like the mediacomem/mbtileserver fork.
+
+The setup is imple: the volumes containing the tilesets need to be shared with the container.
+The disadvantage is that the cron job is watching only every minute for changes.

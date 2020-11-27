@@ -1,7 +1,7 @@
 {
-  "name": "pointsvtgeneration",
+  "name": "vectortilesmarkersgenerator",
   "version": "1.2.0",
-  "description": "Pipeline to generate MBtiles (vector tiles) when a new point (a new picture) is validated or added",
+  "description": "Tasks pipeline to generate MBtiles (vector tiles) from a PostGIS server using channel notification, og2ogr and tippecanoe.",
   "main": "index.js",
   "private": true,
   "scripts": {
@@ -14,23 +14,21 @@
   "author": "imagoiq",
   "license": "ISC",
   "dependencies": {
-    "@types/better-queue": "^3.8.2",
-    "@types/dockerode": "^2.5.34",
-    "better-queue": "^3.8.10",
+    "@types/dockerode": "^3.2.1",
     "dockerode": "^3.2.1",
     "dotenv": "^8.2.0",
     "filesize": "^6.1.0",
     "js-yaml": "^3.14.0",
-    "pg": "^8.3.0",
+    "pg": "^8.5.1",
     "pg-listen": "^1.6.0",
     "promisify-child-process": "^4.1.1"
   },
   "devDependencies": {
     "@types/js-yaml": "^3.12.5",
-    "@types/node": "^14.0.26",
-    "@types/pg": "^7.14.4",
-    "tslib": "^2.0.0",
-    "tslint": "^6.1.2",
-    "typescript": "^3.9.7"
+    "@types/node": "^14.14.10",
+    "@types/pg": "^7.14.7",
+    "tslib": "^2.0.3",
+    "tslint": "^6.1.3",
+    "typescript": "^4.1.2"
   }
 }

@@ -2,8 +2,8 @@ tasks:
 
   visit:
     channelName: "update_vt_visit"
-    debounceWait: 30000
     sql: "SELECT id, title, location FROM images"
+    sqlColumNameRef: "images.id"
     vtParams:
       - "-zg"
       - "--drop-densest-as-needed"
@@ -11,8 +11,8 @@ tasks:
 
   contribute:
     channelName: "update_vt_contribute"
-    debounceWait: 30000
     sql: "SELECT id, location FROM images"
+    sqlColumNameRef: "images.id"
     vtParams:
       - "-zg"
       - "--drop-densest-as-needed"

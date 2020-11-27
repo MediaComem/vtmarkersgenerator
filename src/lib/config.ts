@@ -2,18 +2,19 @@ import yaml from 'js-yaml';
 import fs from 'fs';
 
 interface TasksFile {
-    tasks: Tasks
+    tasks: Tasks;
 }
 
 interface Tasks {
-    [key: string]: Task
+    [key: string]: Task;
 }
 
 interface Task {
-    channelName: string,
-    debounceWait: number,
-    sql: string,
-    vtParams: string[]
+    channelName: string;
+    debounceWait: number;
+    sql: string;
+    sqlColumNameRef: string;
+    vtParams: string[];
 }
 
 const getTasks = async () => {
@@ -25,9 +26,9 @@ const getTasks = async () => {
         console.log(e);
         process.exit(1);
     }
-}
+};
 
-export{
+export {
     getTasks
-}
+};
 
