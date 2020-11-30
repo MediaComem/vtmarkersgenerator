@@ -131,7 +131,7 @@ Optional variables can also be set for extra features:
 
 Variable                         | Default value                                | Description
 :---                             | :---                                         | :---
-`KILL_IMAGE_NAME`                | -                                            | Imager name corresponding to a running container to send kill signal (for example to gracefully restart it when new tilesets are generated)
+`KILL_IMAGE_NAME`                | -                                            | Image name corresponding to a running container to send kill signal (for example to gracefully restart it when new tilesets are generated)
 `KILL_SIGNAL`                    | -                                            | Type of kill signal send to KILL_IMAGE_NAME container
 `TMP_PATH`                       | -                                            | Temporary working folder inside the container. Be aware that TMP_PATH and OUTPUT_PATH need to be on the same filesystem.
 `OUTPUT_PATH`                    | -                                            | Output mbtiles folder inside the container. Be aware that TMP_PATH and OUTPUT_PATH need to be on the same filesystem.
