@@ -89,6 +89,12 @@ const addPoint = async (id: number, name: string, sql: string, sqlColumNameRef: 
 
   /* 2. Export MbTiles from Geojson */
 
+  // Ensure that the point is added to the task name layer. Without attributes a new layer will be created following the geojson filename.
+  if (!vtParams.includes('-l')) {
+    vtParams.push('-l');
+    vtParams.push(name);
+  }
+
   await vt.generate(`${TMP_PATH}/${singleName}.geojson`, `${TMP_PATH}/${singleName}.mbtiles`, vtParams);
 
   /* 3. Make a temporary file */
