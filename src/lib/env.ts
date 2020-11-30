@@ -6,11 +6,15 @@ config({ path: resolve(__dirname, '../../.env') });
 
 /* Set directories variable */
 
-process.env.TMP_PATH = '/tmp';
-process.env.OUTPUT_PATH = './output';
+process.env.TMP_PATH ||= './tmp';
+process.env.OUTPUT_PATH ||= './output';
 
-/* Create output folder if it doesn't exist */
+/* Create folders if it doesn't exist */
 
-if(!fs.existsSync(process.env.OUTPUT_PATH)){
+if (!fs.existsSync(process.env.OUTPUT_PATH)) {
     fs.mkdirSync(process.env.OUTPUT_PATH);
+}
+
+if (!fs.existsSync(process.env.TMP_PATH)) {
+    fs.mkdirSync(process.env.TMP_PATH);
 }
