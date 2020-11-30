@@ -6,7 +6,7 @@ config({ path: resolve(__dirname, '../../.env') });
 
 /* Set directories variable */
 
-process.env.TMP_PATH ||= './tmp';
+process.env.TMP_PATH ||= './output/tmp';
 process.env.OUTPUT_PATH ||= './output';
 
 /* Create folders if it doesn't exist */
