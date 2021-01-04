@@ -1,6 +1,6 @@
 {
   "name": "vtmarkersgenerator",
-  "version": "2.1.2",
+  "version": "2.2.0",
   "description": "Tasks pipeline to generate MBtiles (vector tiles) from a PostGIS server using channel notification, og2ogr and tippecanoe.",
   "main": "index.js",
   "private": true,
