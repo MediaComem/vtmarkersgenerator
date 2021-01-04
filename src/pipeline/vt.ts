@@ -17,19 +17,17 @@ const generate = (inputpPath: string, outputPath: string, exportArgs: string[]) 
     return new Promise<void>((resolve, reject) => {
         const task = spawn('tippecanoe', [...baseArgs, ...exportArgs], { shell: true });
 
+        /* Output Errors from tippecanoe */
         task.stderr.on('data', (data: string) => {
-            console.error(`VT export stderr: ${data}`);
-            reject();
+            reject(new Error(`VT export stderr: ${data}`));
         });
 
         task.on('close', (code: number) => {
-            if (code !== 0) {
-                console.error(`VT export process exited with code ${code}`);
-                reject();
-            }
+            /* Process exited */
+            if (code !== 0) reject(new Error(`VT export process exited with code ${code}`));
 
             const fileStats = fs.statSync(outputPath);
-            console.log(`MBtiles sucessfuly created at ${outputPath} with a size of ${filesize(fileStats.size, { round: 0 })} `);
+            console.log(`\nMBtiles created at ${outputPath} with a size of ${filesize(fileStats.size, { round: 0 })} `);
             resolve();
         });
     });
@@ -53,19 +51,17 @@ const filter = (inputpPath: string, outputPath: string, filterArg: string) => {
     return new Promise<void>((resolve, reject) => {
         const task = spawn('tile-join', args, { shell: true });
 
+        /* Output Errors from tile-join */
         task.stderr.on('data', (data: string) => {
-            console.error(`VT filtering stderr: ${data}`);
-            reject();
+            reject(new Error(`VT filtering stderr: ${data}`));
         });
 
         task.on('close', (code: number) => {
-            if (code !== 0) {
-                console.error(`VT filtering process exited with code ${code}`);
-                reject();
-            }
+            /* Process exited */
+            if (code !== 0) reject(new Error(`VT filtering process exited with code ${code}`));
 
             const fileStats = fs.statSync(outputPath);
-            console.log(`MBtiles sucessfuly filtered and created at ${outputPath} with a size of ${filesize(fileStats.size, { round: 0 })} `);
+            console.log(`\nMBtiles filtered and created at ${outputPath} with a size of ${filesize(fileStats.size, { round: 0 })} `);
             resolve();
         });
     });
@@ -86,19 +82,17 @@ const merge = async (inputpPaths: string[], outputPath: string) => {
     return new Promise<void>((resolve, reject) => {
         const task = spawn('tile-join', args, { shell: true });
 
+        /* Output Errors from tile-join */
         task.stderr.on('data', (data: string) => {
-            console.error(`VT merging stderr: ${data}`);
-            reject();
+            reject(new Error(`VT merging stderr: ${data}`));
         });
 
         task.on('close', (code: number) => {
-            if (code !== 0) {
-                console.error(`VT merging process exited with code ${code}`);
-                reject();
-            }
+            /* Process exited */
+            if (code !== 0) reject(new Error(`VT merging process exited with code ${code}`));
 
             const fileStats = fs.statSync(outputPath);
-            console.log(`MBtiles sucessfuly merged at ${outputPath} with a size of ${filesize(fileStats.size, { round: 0 })} `);
+            console.log(`\nMBtiles merged at ${outputPath} with a size of ${filesize(fileStats.size, { round: 0 })} `);
             resolve();
         });
     });

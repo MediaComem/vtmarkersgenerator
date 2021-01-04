@@ -23,19 +23,27 @@ const generate = (exportPath: string, query: string) => {
     return new Promise<void>((resolve, reject) => {
         const task = spawn('ogr2ogr ', exportArgs, { shell: true });
 
+        /* Output Errors from ogr2ogr */
         task.stderr.on('data', (data: string) => {
-            console.error(`GeoJSON export stderr: ${data}`);
-            reject();
+            reject(new Error(`GeoJSON export stderr: ${data}`));
         });
 
         task.on('close', (code: number) => {
-            if (code !== 0) {
-                console.error(`GeoJSON export process exited with code ${code}`);
-                reject();
-            }
+            /* Process exited */
+            if (code !== 0) reject(new Error(`GeoJSON export process exited with code ${code}`));
 
             const fileStats = fs.statSync(exportPath);
-            console.log(`Temporary geoJSON sucessfuly created at ${exportPath} with a size of ${filesize(fileStats.size, { round: 0 })} `);
+
+            /* Check if file is empty */
+            if (fileStats.size < 1000) { // Evalute only file under 1000 B. 100 B should be sufficient in theory. 1000 B is safe bet
+                const file = fs.readFileSync(exportPath, 'utf8');
+                const fileParsed = JSON.parse(file);
+                const isFeaturesEmpty = Object.entries(fileParsed.features).length === 0;
+
+                if (isFeaturesEmpty) reject(`No matching feature, check SQL parameters`);
+            }
+
+            console.log(`\nTemporary geoJSON created at ${exportPath} with a size of ${filesize(fileStats.size, { round: 0 })} `);
             resolve();
         });
     });

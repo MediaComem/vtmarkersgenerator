@@ -26,7 +26,7 @@ db.connect().then(async (subscriber: any) => {
 
 
 interface Update {
-  id: number;
+  ref: number;
   action: "add" | "remove";
 }
 
@@ -73,69 +73,78 @@ const triggerInitialPipeline = async (name: string, sql: string, vtParams: strin
     performance.measure(`${name} pipeline`, 'start', 'stop');
 
   } catch (e) {
-    console.log(`Task '${name}': An error happen during the generation, please review the parameters\n`);
+    console.error(`Task '${name}': An error happen during the generation, please review the parameters\n`);
   }
 };
 
-const addPoint = async (id: number, name: string, sql: string, sqlColumNameRef: string, vtParams: string[]) => {
-  const sqlUniqueId = sql + ` AND ${sqlColumNameRef} = ${id}`;
+const addPoint = async (ref: number, name: string, sql: string, sqlColumNameRef: string, vtParams: string[]) => {
+  const sqlUniqueId = sql + ` AND ${sqlColumNameRef} = ${ref}`;
   const timestamp = Date.now();
 
-  const singleName = `${name}_${id}_${timestamp}`;
+  const singleName = `${name}_${ref}_${timestamp}`;
 
-  /* 1. Export a GeoJSON file from the DB */
+  try {
 
-  await geoJSON.generate(`${TMP_PATH}/${singleName}.geojson`, sqlUniqueId);
+    /* 1. Export a GeoJSON file from the DB */
+    await geoJSON.generate(`${TMP_PATH}/${singleName}.geojson`, sqlUniqueId);
 
-  /* 2. Export MbTiles from Geojson */
+    /* 2. Export MbTiles from Geojson */
 
-  // Ensure that the point is added to the task name layer. Without attributes a new layer will be created following the geojson filename.
-  if (!vtParams.includes('-l')) {
-    vtParams.push('-l');
-    vtParams.push(name);
+    // Ensure that the point is added to the task name layer. Without attributes a new layer will be created following the geojson filename.
+    if (!vtParams.includes('-l')) {
+      vtParams.push('-l');
+      vtParams.push(name);
+    }
+
+    await vt.generate(`${TMP_PATH}/${singleName}.geojson`, `${TMP_PATH}/${singleName}.mbtiles`, vtParams);
+
+    /* 3. Make a temporary file */
+
+    await fs.promises.copyFile(`${OUTPUT_PATH}/${name}.mbtiles`, `${TMP_PATH}/${name}_${timestamp}.mbtiles`);
+
+    /* 4. Merge unique MbTiles with initial Mbtiles and remove unique MbTiles */
+
+    const mbtilesToMerge = [
+      `${TMP_PATH}/${singleName}.mbtiles`,
+      `${TMP_PATH}/${name}_${timestamp}.mbtiles`,
+    ];
+
+    await vt.merge(mbtilesToMerge, `${OUTPUT_PATH}/${name}.mbtiles`);
+
+    /* 5. Delete temporary files */
+
+    fs.promises.unlink(`${TMP_PATH}/${singleName}.geojson`);
+    fs.promises.unlink(`${TMP_PATH}/${singleName}.mbtiles`);
+    fs.promises.unlink(`${TMP_PATH}/${name}_${timestamp}.mbtiles`);
+
+  } catch (msg) {
+    console.error(msg);
   }
-
-  await vt.generate(`${TMP_PATH}/${singleName}.geojson`, `${TMP_PATH}/${singleName}.mbtiles`, vtParams);
-
-  /* 3. Make a temporary file */
-
-  await fs.promises.copyFile(`${OUTPUT_PATH}/${name}.mbtiles`, `${TMP_PATH}/${name}_${timestamp}.mbtiles`);
-
-  /* 4. Merge unique MbTiles with initial Mbtiles and remove unique MbTiles */
-
-  const mbtilesToMerge = [
-    `${TMP_PATH}/${singleName}.mbtiles`,
-    `${TMP_PATH}/${name}_${timestamp}.mbtiles`,
-  ];
-
-  await vt.merge(mbtilesToMerge, `${OUTPUT_PATH}/${name}.mbtiles`);
-
-  /* 5. Delete temporary files */
-
-  fs.promises.unlink(`${TMP_PATH}/${singleName}.geojson`);
-  fs.promises.unlink(`${TMP_PATH}/${singleName}.mbtiles`);
-  fs.promises.unlink(`${TMP_PATH}/${name}_${timestamp}.mbtiles`);
 };
 
-const removePoint = async (id: number, name: string) => {
-  const filter = `{"*":["none",["==","$id", ${id}]]}`; // Tippecanoe/tile-join use old Mapbox Gl Specification (as of writing). Nowadays "$id" would be written [id]
+const removePoint = async (ref: number, name: string) => {
+  const filter = `{"*":["none",["==","$id", ${ref}]]}`; // Tippecanoe/tile-join use old Mapbox Gl Specification (as of writing). Nowadays "$ref" would be written [ref]
 
-  /* 1. Filter MbTiles */
+  try {
+    /* 1. Filter MbTiles */
 
-  await vt.filter(`${OUTPUT_PATH}/${name}.mbtiles`, `${TMP_PATH}/${name}.mbtiles`, filter);
+    await vt.filter(`${OUTPUT_PATH}/${name}.mbtiles`, `${TMP_PATH}/${name}.mbtiles`, filter);
 
-  /* 2. Overwrite MbTiles with filterd MbTiles */
+    /* 2. Overwrite MbTiles with filterd MbTiles */
 
-  await fs.promises.rename(`${TMP_PATH}/${name}.mbtiles`, `${OUTPUT_PATH}/${name}.mbtiles`);
+    await fs.promises.rename(`${TMP_PATH}/${name}.mbtiles`, `${OUTPUT_PATH}/${name}.mbtiles`);
+  } catch (msg) {
+    console.error(msg);
+  }
 };
 
 const triggerUpdatePipeline = async (name: string, sql: string, sqlColumNameRef: string, vtParams: string[], update: Update): Promise<any> => {
   console.log(`\nTask '${name}': new point update`);
 
   try {
-    /* Check update id */
+    /* Check update ref */
 
-    if (!update?.id || (typeof update?.id !== 'number' && !isFinite(update?.id))) {
+    if (!update?.ref || (typeof update?.ref !== 'number' && !isFinite(update?.ref))) {
       throw new Error('Id update is not a number.');
     }
 
@@ -145,14 +154,14 @@ const triggerUpdatePipeline = async (name: string, sql: string, sqlColumNameRef:
 
     /* Add or remove point */
 
-    console.log(`Update: ${update?.action} point ${update.id}`);
+    console.log(`Update: ${update?.action} point ${update.ref}\n`);
 
     switch (update?.action) {
       case 'add':
-        await addPoint(update.id, name, sql, sqlColumNameRef, vtParams);
+        await addPoint(update.ref, name, sql, sqlColumNameRef, vtParams);
         break;
       case 'remove':
-        await removePoint(update.id, name);
+        await removePoint(update.ref, name);
         break;
       default:
         throw new Error('Action update keyword is unknown.');
@@ -168,6 +177,7 @@ const triggerUpdatePipeline = async (name: string, sql: string, sqlColumNameRef:
     performance.measure(`${name} pipeline`, 'start', 'stop');
 
   } catch (e) {
-    console.log(`Task '${name}': An error happen during the update, please review the parameters\n`, e);
+    console.error(`Task '${name}': An error happen during the update, please review the parameters`);
+    if (e) console.error(`Error: ${e}`);
   }
 };
