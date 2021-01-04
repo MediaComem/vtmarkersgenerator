@@ -14,7 +14,9 @@
   "author": "imagoiq",
   "license": "ISC",
   "dependencies": {
+    "@types/better-queue": "^3.8.2",
     "@types/dockerode": "^3.2.1",
+    "better-queue": "^3.8.10",
     "dockerode": "^3.2.1",
     "dotenv": "^8.2.0",
     "filesize": "^6.1.0",

@@ -96,12 +96,17 @@ BEGIN
  -- When state changed, update vt
  IF old.state <> new.state
  THEN
+    -- To update an item (single mode)
     PERFORM pg_notify(
         'myChannelName',
         json_build_object(
-            'action', 'add', # add/remove are supported
+            'action', 'add', -- add/remove are supported
             'ref', new.id
         )::text
+    );
+    -- To update all items (bulk mode)
+    PERFORM pg_notify(
+        'myChannelName'
     );
  END IF;
 

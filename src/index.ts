@@ -3,6 +3,7 @@ import './lib/env';
 import './lib/logPerformance';
 import { performance } from 'perf_hooks';
 import fs from 'fs';
+import Queue from 'better-queue';
 
 import * as config from './lib/config';
 import * as db from './lib/db';
@@ -26,14 +27,28 @@ db.connect().then(async (subscriber: any) => {
 
 
 interface Update {
-  ref: number;
   action: "add" | "remove";
+  ref: number;
 }
 
 const initPipeline = async (subscriber: any, name: string, channelName: string, sql: string, sqlColumNameRef: string, vtParams: string[]) => {
+  /* Create queue for channel update */
+
+  const q = new Queue(async (task, cb) => {
+    /* Trigger single update when a valid ref is given */
+    const isSingleUpdate = task.update?.ref && (typeof task.update?.ref === 'number' && isFinite(task.update?.ref));
+
+    if (isSingleUpdate) {
+      await triggerSingleUpdate(name, sql, sqlColumNameRef, vtParams, task.update);
+    } else {
+      await triggerBulkUpdate(name, sql, vtParams);
+    }
+    cb();
+  });
+
   /* Launch pipeline at startup to create initial mbtile */
 
-  await triggerInitialPipeline(name, sql, vtParams);
+  await triggerBulkUpdate(name, sql, vtParams);
 
   /* Initalize listening of channel */
 
@@ -43,11 +58,11 @@ const initPipeline = async (subscriber: any, name: string, channelName: string, 
   /* Launch pipeline on update via channel notification */
 
   subscriber.notifications.on(channelName, async (update: Update) => {
-    await triggerUpdatePipeline(name, sql, sqlColumNameRef, vtParams, update);
+    q.push({ id: channelName, update });
   });
 };
 
-const triggerInitialPipeline = async (name: string, sql: string, vtParams: string[]): Promise<any> => {
+const triggerBulkUpdate = async (name: string, sql: string, vtParams: string[]): Promise<any> => {
   console.log(`\nTask '${name}': create initial mbtile`);
 
   try {
@@ -138,7 +153,7 @@ const removePoint = async (ref: number, name: string) => {
   }
 };
 
-const triggerUpdatePipeline = async (name: string, sql: string, sqlColumNameRef: string, vtParams: string[], update: Update): Promise<any> => {
+const triggerSingleUpdate = async (name: string, sql: string, sqlColumNameRef: string, vtParams: string[], update: Update): Promise<any> => {
   console.log(`\nTask '${name}': new point update`);
 
   try {
