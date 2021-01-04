@@ -43,7 +43,7 @@ const generate = (exportPath: string, query: string) => {
                 if (isFeaturesEmpty) reject(`No matching feature, check SQL parameters`);
             }
 
-            console.log(`\nTemporary geoJSON created at ${exportPath} with a size of ${filesize(fileStats.size, { round: 0 })} `);
+            console.log(`Temporary geoJSON created at ${exportPath} with a size of ${filesize(fileStats.size, { round: 0 })} `);
             resolve();
         });
     });

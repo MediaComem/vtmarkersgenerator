@@ -63,7 +63,7 @@ const initPipeline = async (subscriber: any, name: string, channelName: string, 
 };
 
 const triggerBulkUpdate = async (name: string, sql: string, vtParams: string[]): Promise<any> => {
-  console.log(`\nTask '${name}': create initial mbtile`);
+  console.log(`\nTask '${name}': create bulk mbtile`);
 
   try {
     /* Start performance timer */
@@ -154,8 +154,6 @@ const removePoint = async (ref: number, name: string) => {
 };
 
 const triggerSingleUpdate = async (name: string, sql: string, sqlColumNameRef: string, vtParams: string[], update: Update): Promise<any> => {
-  console.log(`\nTask '${name}': new point update`);
-
   try {
     /* Check update ref */
 
@@ -169,7 +167,7 @@ const triggerSingleUpdate = async (name: string, sql: string, sqlColumNameRef: s
 
     /* Add or remove point */
 
-    console.log(`Update: ${update?.action} point ${update.ref}\n`);
+    console.log(`\nTask '${name}': ${update?.action} point ${update.ref}\n`);
 
     switch (update?.action) {
       case 'add':

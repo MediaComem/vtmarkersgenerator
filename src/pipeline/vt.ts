@@ -27,7 +27,7 @@ const generate = (inputpPath: string, outputPath: string, exportArgs: string[]) 
             if (code !== 0) reject(new Error(`VT export process exited with code ${code}`));
 
             const fileStats = fs.statSync(outputPath);
-            console.log(`\nMBtiles created at ${outputPath} with a size of ${filesize(fileStats.size, { round: 0 })} `);
+            console.log(`MBtiles created at ${outputPath} with a size of ${filesize(fileStats.size, { round: 0 })} `);
             resolve();
         });
     });
@@ -61,7 +61,7 @@ const filter = (inputpPath: string, outputPath: string, filterArg: string) => {
             if (code !== 0) reject(new Error(`VT filtering process exited with code ${code}`));
 
             const fileStats = fs.statSync(outputPath);
-            console.log(`\nMBtiles filtered and created at ${outputPath} with a size of ${filesize(fileStats.size, { round: 0 })} `);
+            console.log(`MBtiles filtered and created at ${outputPath} with a size of ${filesize(fileStats.size, { round: 0 })} `);
             resolve();
         });
     });
@@ -92,7 +92,7 @@ const merge = async (inputpPaths: string[], outputPath: string) => {
             if (code !== 0) reject(new Error(`VT merging process exited with code ${code}`));
 
             const fileStats = fs.statSync(outputPath);
-            console.log(`\nMBtiles merged at ${outputPath} with a size of ${filesize(fileStats.size, { round: 0 })} `);
+            console.log(`MBtiles merged at ${outputPath} with a size of ${filesize(fileStats.size, { round: 0 })} `);
             resolve();
         });
     });
