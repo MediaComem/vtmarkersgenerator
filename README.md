@@ -98,16 +98,14 @@ BEGIN
  THEN
     -- To update an item (single mode)
     PERFORM pg_notify(
-        'myChannelName',
+        'myChannelName'::text,
         json_build_object(
             'action', 'add', -- add/remove are supported
             'ref', new.id
         )::text
     );
     -- To update all items (bulk mode)
-    PERFORM pg_notify(
-        'myChannelName'
-    );
+    PERFORM pg_notify('myChannelName'::text, json_build_object()::text);
  END IF;
 
  RETURN NULL;
