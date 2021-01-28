@@ -164,3 +164,10 @@ A safer option is to use a tileserver with a cron job like the mediacomem/mbtile
 
 The setup is imple: the volumes containing the tilesets need to be shared with the container.
 The disadvantage is that the cron job is watching only every minute for changes.
+
+## Code improvements
+
+Some directions of how the project could be enhanced:
+
+* Queue seem to be limited currenlty. After a certain amount of PSQL Notification, new notification aren't added to the queue. This might be a limitation of better-queue which use by default in-memory management.
+* Functions use too much arguments. It could be better to use object to share arguments across function in index.ts.
