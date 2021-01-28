@@ -88,7 +88,7 @@ const triggerBulkUpdate = async (name: string, sql: string, vtParams: string[]):
     performance.measure(`${name} pipeline`, 'start', 'stop');
 
   } catch (e) {
-    console.error(`Task '${name}': An error happen during the generation, please review the parameters\n`);
+    console.error(`Task '${name}': An error happen during the generation, please review the parameters\n\n${e}`);
   }
 };
 
